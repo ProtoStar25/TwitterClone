@@ -12,5 +12,10 @@
         {
             Message = message;
         }
+
+        public override string GetMessage()
+        {
+            return $"System notification from ID {SystemId}: {Message}";
+        }
     }
 }

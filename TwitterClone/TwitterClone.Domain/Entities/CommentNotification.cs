@@ -12,5 +12,9 @@
         {
             Message = message;
         }
+        public override string GetMessage()
+        {
+            return $"User with ID {CommentByUserId} commented on your post";
+        }
     }
 }
