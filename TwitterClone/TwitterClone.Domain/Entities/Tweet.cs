@@ -1,7 +1,9 @@
 ﻿
+using System.Security;
+
 namespace TwitterClone.Domain.Entities
 {
-    public class Tweet : BaseEntity
+    public class Tweet : BaseEntity, ILikeable
     {
         private Guid _userid;
         private string _content;
@@ -21,6 +23,15 @@ namespace TwitterClone.Domain.Entities
         {
             get { return _content; }
             set { _content = value; }
+        }
+
+        public bool CanBeLiked()
+        {
+            if(String.IsNullOrWhiteSpace(Content))
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
