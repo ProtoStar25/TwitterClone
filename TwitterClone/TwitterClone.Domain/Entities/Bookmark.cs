@@ -19,6 +19,9 @@
             set { _tweetId = value; }
         }
         public DateTime BookmarkedAt
-       
+        {
+            get { return CreatedAt; }
+        }
+
     }
 }

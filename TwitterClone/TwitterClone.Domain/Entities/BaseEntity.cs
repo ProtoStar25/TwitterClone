@@ -10,7 +10,7 @@
 
         public BaseEntity(Guid id)
         {
-            Id = id
+            Id = id;
             CreatedAt = DateTime.UtcNow;
         }
     }
