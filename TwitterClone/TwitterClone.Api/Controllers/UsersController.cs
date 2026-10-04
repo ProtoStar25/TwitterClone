@@ -1,29 +1,118 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TwitterClone.Api.Data;
+using TwitterClone.Api.Dtos;
+using TwitterClone.Domain.Entities;
 
 namespace TwitterClone.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly UserRepository _userRepository;
 
-        public UserController(IConfiguration configuration)
+        public UsersController(UserRepository userRepository)
         {
-            _configuration = configuration;
+            _userRepository = userRepository;
         }
 
         [HttpGet]
         public IActionResult GetUsers()
         {
-            var users = new List<object>
+            var users = _userRepository.GetUsers();
+ 
+            return Ok(users.Select(user => new UserDto
             {
-                new { Id = Guid.NewGuid(), Username = "pesssi", Email = "example1@gmail.com" },
-                new { Id = Guid.NewGuid(), Username = "penaldo", Email = "example2@gmail.com" },
-                new { Id = Guid.NewGuid(), Username = "neymar", Email = "example3@gmail.com" }
-            };
-            return Ok(users);
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email
+            }));
         }
+
+        [HttpPost]
+        public IActionResult CreateUser([FromBody] CreateUserDto createUserDto) 
+        {
+            if(string.IsNullOrWhiteSpace(createUserDto.FirstName) 
+                || string.IsNullOrWhiteSpace(createUserDto.LastName) || 
+                string.IsNullOrWhiteSpace(createUserDto.Email))
+            {
+                return BadRequest("User data is required.");
+            }
+
+            var existingUser = _userRepository.GetUserByEmail(createUserDto.Email);
+            if(existingUser != null)
+            {
+                return BadRequest("A user with the same email already exists.");
+            }
+
+            var createdUser = _userRepository.AddUser(new User
+            {
+                FirstName = createUserDto.FirstName,
+                LastName = createUserDto.LastName,
+                Email = createUserDto.Email
+            });
+            return Ok(new UserDto
+            {
+                Id = createdUser.Id,
+                FirstName = createdUser.FirstName,
+                LastName = createdUser.LastName,
+                Email = createdUser.Email
+            });
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetUserById([FromRoute]Guid id)
+        {
+            var user = _userRepository.GetUserById(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return Ok(new UserDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email
+            });
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            var user = _userRepository.GetUserById(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            user.FirstName = updateUserDto.FirstName;
+            user.LastName = updateUserDto.LastName;
+            
+            _userRepository.UpdateUser(user);
+
+            return Ok(new UserDto
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email
+            });
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteUser([FromRoute] Guid id)
+        {
+            var user = _userRepository.GetUserById(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            var isDeleted = _userRepository.DeleteUser(user);
+            return Ok(isDeleted);
+        }
+
+
     }
 }
