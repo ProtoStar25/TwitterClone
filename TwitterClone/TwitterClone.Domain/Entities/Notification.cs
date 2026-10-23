@@ -6,12 +6,13 @@
         private string _type;
         private string _message;
         private bool _isRead;
-   
 
-        public Notification(string type) : base(Guid.NewGuid())
+
+        public Notification(string notificationType) : base(Guid.NewGuid())
         {
-            _type = type;
+            _type = notificationType;
         }
+
 
         public Guid UserId
         {
@@ -36,8 +37,12 @@
             get { return _isRead; }
             set { _isRead = value; }
         }
-        public abstract string GetMessage();
-        
 
-}
+        public string GetNotificationInfo()
+        {
+            return $"UserId: {_userId}, NotificationType: {_type}";
+        }
+
+        public abstract string GetMessage();
+    }
 }
