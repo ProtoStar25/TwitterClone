@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TwitterClone.Application.Dtos
 {
-    public class CreateTweetDto
+    public class CreateTweetDto : IValidatableObject
     {
-        public Guid UserId { get; set; }
-        public string Content { get; set; }
+        public required Guid UserId { get; set; }
+
+        [Required]
+        public required string Content { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            return TweetContentValidator.Validate(Content, nameof(Content));
+        }
     }
 }

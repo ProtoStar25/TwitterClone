@@ -16,6 +16,11 @@ builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ITweetRepository ,TweetRepository>();
 
+
+//Services Reg
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITweetService, TweetService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

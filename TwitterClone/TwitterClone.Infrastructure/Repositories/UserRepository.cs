@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TwitterClone.Application.Interfaces;
+﻿using TwitterClone.Application.Interfaces;
 using TwitterClone.Domain.Entities;
 
 namespace TwitterClone.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private List<User> _users { get; set; } = new List<User>();
+
+        private readonly List<User> _users = new List<User>();
+
         public User AddUser(User user)
         {
             _users.Add(user);
-            return user;
 
+            return user;
         }
 
         public User UpdateUser(User user)
@@ -37,12 +34,13 @@ namespace TwitterClone.Infrastructure.Repositories
 
         public List<User> GetUsers()
         {
-            return _users;
+            return _users.ToList();
         }
 
         public User? GetUserByEmail(string email)
         {
-            return _users.SingleOrDefault(u => u.Email == email);
+            return _users.SingleOrDefault(u =>
+                string.Equals(u.Email, email.Trim(), StringComparison.OrdinalIgnoreCase));
         }
     }
 }

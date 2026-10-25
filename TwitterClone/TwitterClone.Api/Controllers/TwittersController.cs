@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using TwitterClone.Domain.Entities;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace TwitterClone.Api.Controllers
 {
@@ -10,25 +8,29 @@ namespace TwitterClone.Api.Controllers
     {
         private readonly IConfiguration _configuration;
 
-        public TwittersController(IConfiguration configuration)
+        public TwittersController(
+            IConfiguration configuration)
         {
             _configuration = configuration;
         }
 
         [HttpGet]
-
         public IActionResult GetTweets()
         {
-            var maxLength = _configuration.GetValue<int>("TwitterSettings:MaxTweetLength");
             var tweets = new List<object>
             {
                 new
-                { UserId = Guid.NewGuid(), Content = "Hello, world!"  },
+                {
+                    UserId = Guid.NewGuid(),
+                    Content = "Hello, world!",
+                },
                 new
-                { UserId = Guid.NewGuid(), Content = "This is a tweet."  },
-                new
-                { UserId = Guid.NewGuid(), Content = "Another tweet here."  }
+                {
+                    UserId = Guid.NewGuid(),
+                    Content = "This is my second tweet.",
+                },
             };
+
             return Ok(tweets);
         }
     }

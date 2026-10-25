@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TwitterClone.Application.Dtos;
+﻿using TwitterClone.Application.Dtos;
 using TwitterClone.Application.Interfaces;
+using TwitterClone.Application.Mappings;
 using TwitterClone.Domain.Entities;
 
 namespace TwitterClone.Application.Services
@@ -12,81 +8,107 @@ namespace TwitterClone.Application.Services
     public class TweetService : ITweetService
     {
         private readonly ITweetRepository _tweetRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ILikeRepository _likeRepository;
+        private readonly IBookmarkRepository _bookmarkRepository;
+        private readonly IRetweetRepository _retweetRepository;
 
-        public TweetService(ITweetRepository tweetRepository)
+        public TweetService(
+            ITweetRepository tweetRepository,
+            IUserRepository userRepository,
+            ILikeRepository likeRepository,
+            IBookmarkRepository bookmarkRepository,
+            IRetweetRepository retweetRepository)
         {
             _tweetRepository = tweetRepository;
+            _userRepository = userRepository;
+            _likeRepository = likeRepository;
+            _bookmarkRepository = bookmarkRepository;
+            _retweetRepository = retweetRepository;
         }
 
         public TweetDto? CreateTweet(CreateTweetDto createTweetDto)
         {
-            if (string.IsNullOrWhiteSpace(createTweetDto.Content))
+            if (!IsValidContent(createTweetDto.Content))
             {
                 return null;
             }
-            var createdTweet = _tweetRepository.AddTweet(new Tweet
-            {
-                Content = createTweetDto.Content,
-                UserId = createTweetDto.UserId,
-            });
-            return new TweetDto
-            {
-                Id = createdTweet.Id,
-                Content = createdTweet.Content,
-                UserId = createdTweet.UserId,
-            };
-        }
-        public TweetDto GetTweetById(Guid id)
-        {
-            var tweet = _tweetRepository.GetTweetById(id);
-            if (tweet == null)
+
+            var user = _userRepository.GetUserById(createTweetDto.UserId);
+
+            if (user == null)
             {
                 return null;
             }
-            return new TweetDto
-            {
-                Id = tweet.Id,
-                Content = tweet.Content,
-                UserId = tweet.UserId,
-            };
-        }
-        
-        public TweetDto UpdateTweet(Guid id, UpdateTweetDto updateTweetDto)
-        {
-            var tweet = _tweetRepository.GetTweetById(id);
-            if (tweet == null)
-            {
-                return null;
-            }
-            tweet.Content = updateTweetDto.Content;
-            var updatedTweet = _tweetRepository.UpdateTweet(tweet);
-            return new TweetDto
-            {
-                Id = updatedTweet.Id,
-                Content = updatedTweet.Content,
-                UserId = updatedTweet.UserId,
-            };
+
+            var createdTweet = _tweetRepository.AddTweet(
+                new Tweet(user.Id, createTweetDto.Content.Trim()));
+
+            return createdTweet.ToDto();
         }
 
-        public List<TweetDto> GetTweets()
+        public TweetDto? GetTweetById(Guid id)
         {
-            var tweets = _tweetRepository.GetTweets();
-            return tweets.Select(tweet => new TweetDto
+            var tweet = _tweetRepository.GetTweetById(id);
+
+            return tweet?.ToDto();
+        }
+
+        public List<TweetDto> GetTweets(Guid? userId)
+        {
+            var tweets = userId.HasValue
+                ? _tweetRepository.GetTweetsByUserId(userId.Value)
+                : _tweetRepository.GetTweets();
+
+            // Newest first, like a timeline.
+            return tweets
+                .OrderByDescending(t => t.CreatedAt)
+                .Select(t => t.ToDto())
+                .ToList();
+        }
+
+        public TweetDto? UpdateTweet(Guid id, UpdateTweetDto updateTweetDto)
+        {
+            if (!IsValidContent(updateTweetDto.Content))
             {
-                Id = tweet.Id,
-                Content = tweet.Content,
-                UserId = tweet.UserId,
-            }).ToList();
+                return null;
+            }
+
+            var tweet = _tweetRepository.GetTweetById(id);
+
+            if (tweet == null)
+            {
+                return null;
+            }
+
+            tweet.Content = updateTweetDto.Content.Trim();
+            tweet.MarkAsModified();
+
+            _tweetRepository.UpdateTweet(tweet);
+
+            return tweet.ToDto();
         }
 
         public bool DeleteTweet(Guid id)
         {
             var tweet = _tweetRepository.GetTweetById(id);
+
             if (tweet == null)
             {
                 return false;
             }
+
+            // Likes, bookmarks and retweets can't outlive the tweet they point at.
+            _likeRepository.DeleteLikesByTweetId(id);
+            _bookmarkRepository.DeleteBookmarksByTweetId(id);
+            _retweetRepository.DeleteRetweetsByTweetId(id);
+
             return _tweetRepository.DeleteTweet(tweet);
+        }
+
+        private static bool IsValidContent(string content)
+        {
+            return !string.IsNullOrWhiteSpace(content) && content.Length <= Tweet.MaxContentLength;
         }
     }
 }

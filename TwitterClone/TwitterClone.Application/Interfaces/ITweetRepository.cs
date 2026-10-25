@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TwitterClone.Domain.Entities;
+﻿using TwitterClone.Domain.Entities;
 
 namespace TwitterClone.Application.Interfaces
 {
@@ -12,7 +7,9 @@ namespace TwitterClone.Application.Interfaces
         Tweet AddTweet(Tweet tweet);
         Tweet UpdateTweet(Tweet tweet);
         bool DeleteTweet(Tweet tweet);
+        int DeleteTweetsByUserId(Guid userId);
         Tweet? GetTweetById(Guid id);
         List<Tweet> GetTweets();
+        List<Tweet> GetTweetsByUserId(Guid userId);
     }
 }

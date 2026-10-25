@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TwitterClone.Application.Interfaces;
+﻿using TwitterClone.Application.Interfaces;
 using TwitterClone.Domain.Entities;
 
 namespace TwitterClone.Infrastructure.Repositories
@@ -11,9 +6,18 @@ namespace TwitterClone.Infrastructure.Repositories
     public class TweetRepository : ITweetRepository
     {
 
-        private List<Tweet> _tweets { get; set; } = new List<Tweet>();
+        private readonly List<Tweet> _tweets = new List<Tweet>();
+
         public Tweet AddTweet(Tweet tweet)
         {
+            _tweets.Add(tweet);
+
+            return tweet;
+        }
+
+        public Tweet UpdateTweet(Tweet tweet)
+        {
+            _tweets.RemoveAll(t => t.Id == tweet.Id);
             _tweets.Add(tweet);
             return tweet;
         }
@@ -23,6 +27,11 @@ namespace TwitterClone.Infrastructure.Repositories
             return _tweets.Remove(tweet);
         }
 
+        public int DeleteTweetsByUserId(Guid userId)
+        {
+            return _tweets.RemoveAll(t => t.UserId == userId);
+        }
+
         public Tweet? GetTweetById(Guid id)
         {
             return _tweets.SingleOrDefault(t => t.Id == id);
@@ -30,14 +39,12 @@ namespace TwitterClone.Infrastructure.Repositories
 
         public List<Tweet> GetTweets()
         {
-            return _tweets;
+            return _tweets.ToList();
         }
 
-        public Tweet UpdateTweet(Tweet tweet)
+        public List<Tweet> GetTweetsByUserId(Guid userId)
         {
-            _tweets.RemoveAll(t => t.Id == tweet.Id);
-            _tweets.Add(tweet);
-            return tweet;
+            return _tweets.Where(t => t.UserId == userId).ToList();
         }
     }
 }
